@@ -1,11 +1,14 @@
 [programs.localnet]
 escrow = "93tkEd8UBH9yWRDnFzppoRkw3CKMz8vV8VmPKir9cXP3"
 
+[programs.devnet]
+escrow = "93tkEd8UBH9yWRDnFzppoRkw3CKMz8vV8VmPKir9cXP3"
+
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "id.json"
 
 [scripts]
