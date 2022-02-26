@@ -1,16 +1,17 @@
 //! User (Initializer) constructs an escrow deal:
 //! - SPL token (X) they will offer and amount
-//! - SPL token (Y) count they want in return and amount
+//! - SOL (Y) they want in return
 //! - Program will take ownership of initializer's token X account
 //!
 //! Once this escrow is initialised, either:
-//! 1. User (Taker) can call the exchange function to exchange their Y for X
+//! 1. User (Taker) can call the exchange function to exchange their SOL (Y) for X
 //! - This will close the escrow account and no longer be usable
 //! OR
 //! 2. If no one has exchanged, the initializer can close the escrow account
 //! - Initializer will get back ownership of their token X account
 
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::{program::invoke, system_instruction::transfer};
 use anchor_spl::token::{self, SetAuthority, Token, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
 
@@ -28,6 +29,7 @@ pub mod escrow {
         taker_amount: u64,
     ) -> ProgramResult {
         ctx.accounts.escrow_account.initializer_key = *ctx.accounts.initializer.key;
+        // NFT Token Account
         ctx.accounts
             .escrow_account
             .initializer_deposit_token_account = *ctx
@@ -35,11 +37,12 @@ pub mod escrow {
             .initializer_deposit_token_account
             .to_account_info()
             .key;
+        // SOL Token Account
         ctx.accounts
             .escrow_account
-            .initializer_receive_token_account = *ctx
+            .initializer_receive_wallet_account = *ctx
             .accounts
-            .initializer_receive_token_account
+            .initializer_receive_wallet_account
             .to_account_info()
             .key;
         ctx.accounts.escrow_account.initializer_amount = initializer_amount;
@@ -77,9 +80,18 @@ pub mod escrow {
             ctx.accounts.escrow_account.initializer_amount,
         )?;
 
-        token::transfer(
-            ctx.accounts.into_transfer_to_initializer_context(),
-            ctx.accounts.escrow_account.taker_amount,
+        // Transferring from taker to initializer
+        invoke(
+            &transfer(
+                ctx.accounts.taker.to_account_info().key,
+                ctx.accounts.initializer_receive_wallet_account.to_account_info().key,
+                ctx.accounts.escrow_account.taker_amount,
+            ),
+            &[
+                ctx.accounts.taker.to_account_info(),
+                ctx.accounts.initializer_receive_wallet_account.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
         )?;
 
         token::set_authority(
@@ -104,7 +116,7 @@ pub struct InitializeEscrow<'info> {
         constraint = initializer_deposit_token_account.amount >= initializer_amount
     )]
     pub initializer_deposit_token_account: Account<'info, TokenAccount>,
-    pub initializer_receive_token_account: Account<'info, TokenAccount>,
+    pub initializer_receive_wallet_account: AccountInfo<'info>,
     #[account(init, payer = initializer, space = 8 + EscrowAccount::LEN)]
     pub escrow_account: Account<'info, EscrowAccount>,
     pub system_program: Program<'info, System>,
@@ -116,26 +128,25 @@ pub struct Exchange<'info> {
     #[account(signer)]
     pub taker: AccountInfo<'info>,
     #[account(mut)]
-    pub taker_deposit_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
     pub taker_receive_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub pda_deposit_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub initializer_receive_token_account: Account<'info, TokenAccount>,
+    pub initializer_receive_wallet_account: AccountInfo<'info>,
     #[account(mut)]
     pub initializer_main_account: AccountInfo<'info>,
     #[account(
         mut,
-        constraint = escrow_account.taker_amount <= taker_deposit_token_account.amount,
+        constraint = escrow_account.taker_amount <= taker.lamports(),
         constraint = escrow_account.initializer_deposit_token_account == *pda_deposit_token_account.to_account_info().key,
-        constraint = escrow_account.initializer_receive_token_account == *initializer_receive_token_account.to_account_info().key,
+        constraint = escrow_account.initializer_receive_wallet_account == *initializer_receive_wallet_account.to_account_info().key,
         constraint = escrow_account.initializer_key == *initializer_main_account.key,
         close = initializer_main_account
     )]
     pub escrow_account: Account<'info, EscrowAccount>,
     pub pda_account: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -158,7 +169,7 @@ pub struct CancelEscrow<'info> {
 pub struct EscrowAccount {
     pub initializer_key: Pubkey,
     pub initializer_deposit_token_account: Pubkey,
-    pub initializer_receive_token_account: Pubkey,
+    pub initializer_receive_wallet_account: Pubkey,
     pub initializer_amount: u64,
     pub taker_amount: u64,
 }
@@ -211,23 +222,6 @@ impl<'info> Exchange<'info> {
             from: self.pda_deposit_token_account.to_account_info().clone(),
             to: self.taker_receive_token_account.to_account_info().clone(),
             authority: self.pda_account.clone(),
-        };
-        let cpi_program = self.token_program.to_account_info();
-        CpiContext::new(cpi_program, cpi_accounts)
-    }
-}
-
-impl<'info> Exchange<'info> {
-    fn into_transfer_to_initializer_context(
-        &self,
-    ) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        let cpi_accounts = Transfer {
-            from: self.taker_deposit_token_account.to_account_info().clone(),
-            to: self
-                .initializer_receive_token_account
-                .to_account_info()
-                .clone(),
-            authority: self.taker.clone(),
         };
         let cpi_program = self.token_program.to_account_info();
         CpiContext::new(cpi_program, cpi_accounts)
