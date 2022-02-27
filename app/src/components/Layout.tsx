@@ -17,12 +17,12 @@ export const Layout = ({
         <Link href="/" passHref>
           <a>
             <div className="font-mono text-2xl font-light text-pink-500 text-left">
-              🏖 Hayama
+              👨‍🚀 SolSeller
             </div>
           </a>
         </Link>
         <div className="font-mono text-xs text-gray-600 px-3">
-          NFT trade has never been so easy
+          Selling NFT&apos;s on the Solana blockchain
         </div>
       </div>
       <div className="flex flex-row items-center">
@@ -36,7 +36,7 @@ export const Layout = ({
 
     <footer className="flex items-center boarder-t-2 boarder-gray-100 bg-pink-300 py-2 px-10 sm:justify-between sm:space-x-10 bottom-0">
       <div className="font-mono text-xs text-gray-600">
-        2021 Sol Hayama All rights reserved
+        2021 Sol Seller All rights reserved
       </div>
       <div className="flex gap-3 h-5">
         <a
@@ -48,7 +48,7 @@ export const Layout = ({
           {`FAQ & ToC`}
         </a>
         <a
-          href={`https://github.com/tomoima525/sol-hayama`}
+          href={`https://github.com/arunavo4/sol-sell-escrow`}
           target="_blank"
           rel="noreferrer"
         >

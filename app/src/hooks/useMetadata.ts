@@ -4,7 +4,7 @@ import { useState } from "react";
 import { create } from "superstruct";
 import { TokenAccount } from "../accounts/token";
 import { Metadata } from "../schema/metadata";
-import { getMetadata } from "../web3/metaplex/metadataHelpers";
+// import { getMetadata } from "../web3/metaplex/metadataHelpers";
 
 export const useMetadata = (): [
   (Metadata | undefined)[] | null,
@@ -43,10 +43,10 @@ export const useMetadata = (): [
             info.tokenAmount.decimals === 0 && info.tokenAmount.amount === "1"
           );
         });
-      const result = await Promise.all(
-        nftAccounts.map((nft) => getMetadata(connection, nft.mint))
-      ).then((metadatas) => metadatas.filter((meta) => meta !== undefined));
-      setMetadataList(result);
+      // const result = await Promise.all(
+      //   nftAccounts.map((nft) => getMetadata(connection, nft.mint))
+      // ).then((metadatas) => metadatas.filter((meta) => meta !== undefined));
+      // setMetadataList(result);
     } catch (e) {
       setMetadataList([]);
     }

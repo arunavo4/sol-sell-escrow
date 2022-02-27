@@ -8,11 +8,11 @@ import {
   TxHistory,
 } from "../../API";
 import { Layout } from "../../components/Layout";
-import { BuyerInput } from "../../components/BuyerInput";
+// import { BuyerInput } from "../../components/BuyerInput";
 import { ImageType, MetaImage } from "../../components/MetaImage";
 import { Metadata } from "../../schema/metadata";
-import { getMetadata } from "../../web3/metaplex/metadataHelpers";
-import { ItemInfo } from "../../components/ItemInfo";
+// import { getMetadata } from "../../web3/metaplex/metadataHelpers";
+// import { ItemInfo } from "../../components/ItemInfo";
 
 export default function Detail() {
   const router = useRouter();
@@ -106,24 +106,24 @@ export default function Detail() {
             </div>
           </div>
           <div className="w-full md:w-7/12 ml-auto mr-auto px-4">
-            {sellerAddress === publicKey?.toBase58() ? (
-              <ItemInfo
-                isRequested={
-                  transaction?.status === TransactionStatus.REQUESTED
-                }
-                nftAddress={nft as string}
-                sellerAddress={sellerAddress as string}
-              />
+            {/* {sellerAddress === publicKey?.toBase58() ? (
+              // <ItemInfo
+              //   isRequested={
+              //     transaction?.status === TransactionStatus.REQUESTED
+              //   }
+              //   nftAddress={nft as string}
+              //   sellerAddress={sellerAddress as string}
+              // />
             ) : (
-              <BuyerInput
-                isRequested={
-                  transaction?.status === TransactionStatus.REQUESTED
-                }
-                nftAddress={nft as string}
-                onSubmitted={handlePostSubmit}
-                sellerAddress={sellerAddress as string}
-              />
-            )}
+              // <BuyerInput
+              //   isRequested={
+              //     transaction?.status === TransactionStatus.REQUESTED
+              //   }
+              //   nftAddress={nft as string}
+              //   onSubmitted={handlePostSubmit}
+              //   sellerAddress={sellerAddress as string}
+              // />
+            )} */}
           </div>
         </div>
       </section>

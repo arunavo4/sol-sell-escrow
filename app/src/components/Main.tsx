@@ -5,9 +5,6 @@ import { TransactionStatus } from "../API";
 import { useLoadingDispatch } from "../contexts/LoadingContext";
 import { ActionProps, ModalUserAction } from "../contexts/ModalContext";
 import { TransactionType } from "../types";
-import { acceptOffer } from "../web3/acceptOffer";
-import { cancelOffer } from "../web3/cancelOffer";
-import { BuyerInput } from "./BuyerInput";
 import { BuyerTab } from "./BuyerTab";
 import { Loading } from "./dialogs/Loading";
 import { ModalDialog } from "./dialogs/ModalDialog";
@@ -44,13 +41,13 @@ export const Main = () => {
     }
     loadingDispatch({ type: "SHOW_LOADING" });
     try {
-      await cancelOffer({
-        connection,
-        buyer: publicKey,
-        escrowAccountAddressString,
-        nftAddressString: nftAddress,
-        signTransaction,
-      });
+      // await cancelOffer({
+      //   connection,
+      //   buyer: publicKey,
+      //   escrowAccountAddressString,
+      //   nftAddressString: nftAddress,
+      //   signTransaction,
+      // });
       // await API.graphql(
       //   graphqlOperation(updateTxHistory, {
       //     input: { id, status: TransactionStatus.CANCELED },
@@ -81,14 +78,14 @@ export const Main = () => {
     }
     loadingDispatch({ type: "SHOW_LOADING" });
     try {
-      const result = await acceptOffer({
-        connection,
-        escrowAccountAddressString,
-        expectedSellerReceiveAmountInSol: amount,
-        seller: publicKey,
-        sellerNFTAddressStr: nftAddress,
-        signTransaction,
-      });
+      // const result = await acceptOffer({
+      //   connection,
+      //   escrowAccountAddressString,
+      //   expectedSellerReceiveAmountInSol: amount,
+      //   seller: publicKey,
+      //   sellerNFTAddressStr: nftAddress,
+      //   signTransaction,
+      // });
       // await API.graphql(
       //   graphqlOperation(updateTxHistory, {
       //     input: { id, status: TransactionStatus.ACCEPTED },
