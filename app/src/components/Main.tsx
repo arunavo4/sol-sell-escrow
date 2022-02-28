@@ -11,17 +11,18 @@ import { ModalDialog } from "./dialogs/ModalDialog";
 import { MyNFT } from "./MyNFT";
 import { SearchNFT } from "./SearchNFT";
 import { SellerTab } from "./SellerTab";
+import { ref, update} from "firebase/database";
 
 const colors = {
   active: "text-purple-50 bg-purple-500",
   inactive: "text-gray-500 bg-gray-100",
 };
 
-export const Main = () => {
+export const Main = ({database} : {database: any}) => {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useWallet();
   const loadingDispatch = useLoadingDispatch();
-  const [tab, setTab] = useState(TransactionType.Buyer);
+  const [tab, setTab] = useState(TransactionType.Seller);
 
   const handleSwitchTab = (type: TransactionType) => () => {
     setTab(type);
@@ -48,11 +49,9 @@ export const Main = () => {
       //   nftAddressString: nftAddress,
       //   signTransaction,
       // });
-      // await API.graphql(
-      //   graphqlOperation(updateTxHistory, {
-      //     input: { id, status: TransactionStatus.CANCELED },
-      //   })
-      // );
+      update(ref(database, id), {
+        status: TransactionStatus.CANCELED,
+      });
     } catch (e) {
       console.error(e);
       toast((e as Error).message);
@@ -86,11 +85,9 @@ export const Main = () => {
       //   sellerNFTAddressStr: nftAddress,
       //   signTransaction,
       // });
-      // await API.graphql(
-      //   graphqlOperation(updateTxHistory, {
-      //     input: { id, status: TransactionStatus.ACCEPTED },
-      //   })
-      // );
+      update(ref(database, id), {
+        status: TransactionStatus.ACCEPTED,
+      });
     } catch (e) {
       console.error(e);
       toast((e as Error).message);
@@ -131,27 +128,27 @@ export const Main = () => {
           <div className="flex justify-start items-center py-2 gap-2">
             <button
               className={`cursor-pointer py-2 px-4 rounded transition text-center ${
-                tab === TransactionType.Buyer
-                  ? colors["active"]
-                  : colors["inactive"]
-              }`}
-              onClick={handleSwitchTab(TransactionType.Buyer)}
-            >
-              Buy Offers
-            </button>
-            <button
-              className={`cursor-pointer py-2 px-4 rounded transition text-center ${
                 tab === TransactionType.Seller
                   ? colors["active"]
                   : colors["inactive"]
               }`}
               onClick={handleSwitchTab(TransactionType.Seller)}
             >
-              Sell Requests
+              Sell Offers
+            </button>
+            <button
+              className={`cursor-pointer py-2 px-4 rounded transition text-center ${
+                tab === TransactionType.Buyer
+                  ? colors["active"]
+                  : colors["inactive"]
+              }`}
+              onClick={handleSwitchTab(TransactionType.Buyer)}
+            >
+              Buy Requests
             </button>
           </div>
-          {tab === TransactionType.Buyer && <BuyerTab />}
-          {tab === TransactionType.Seller && <SellerTab />}
+          {tab === TransactionType.Seller && <SellerTab database={database}/>}
+          {tab === TransactionType.Buyer && <BuyerTab database={database}/>}
         </div>
       </div>
       <ModalDialog onConfirm={handleConfirm} />

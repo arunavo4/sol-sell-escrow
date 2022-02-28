@@ -5,6 +5,25 @@ import toast from "react-hot-toast";
 import { Layout } from "../components/Layout";
 import { Main } from "../components/Main";
 
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, get, query, orderByValue, limitToLast } from "firebase/database";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID + ".firebaseapp.com",
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DB_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID + ".appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
 const Home: NextPage = () => {
   const [rpc, setRpc] = useState<string | null>(null);
   const { connection } = useConnection();
@@ -26,7 +45,7 @@ const Home: NextPage = () => {
   return (
     <Layout formatRpc={formatRpc}>
       <div className="container mx-auto justify-center">
-        <Main />
+        <Main database={database}/>
       </div>
     </Layout>
   );

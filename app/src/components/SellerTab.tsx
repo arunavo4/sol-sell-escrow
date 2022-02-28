@@ -4,9 +4,9 @@ import { useTransactions } from "../hooks/useTransactions";
 import { TransactionType } from "../types";
 import { Transactions } from "./Transactions";
 
-export const SellerTab = () => {
+export const SellerTab = ({database} : {database: any}) => {
   const { publicKey } = useWallet();
-  const [items, fetch] = useTransactions(TransactionType.Seller);
+  const [items, fetch] = useTransactions(TransactionType.Seller, database);
 
   useEffect(() => {
     if (publicKey) {
