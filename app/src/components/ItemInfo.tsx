@@ -17,7 +17,7 @@ import {
 } from "react-share";
 import { useLoadingState } from "../contexts/LoadingContext";
 
-interface BuyerInputProps {
+interface SellerInputProps {
   nftAddress: string;
   sellerAddress: string;
   isRequested: boolean;
@@ -26,7 +26,7 @@ export const ItemInfo = ({
   nftAddress,
   sellerAddress,
   isRequested,
-}: BuyerInputProps) => {
+}: SellerInputProps) => {
   const { publicKey } = useWallet();
   const loadingState = useLoadingState();
 

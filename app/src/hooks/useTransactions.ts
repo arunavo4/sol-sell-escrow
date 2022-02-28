@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
   TxHistory,
-} from "../API";
+} from "../types";
 import { TransactionType } from "../types";
-import { ref, get, query, equalTo, orderByChild, limitToLast } from "firebase/database";
+import { ref, get, query, equalTo, orderByChild } from "firebase/database";
 
 export const useTransactions = (
   type: TransactionType,

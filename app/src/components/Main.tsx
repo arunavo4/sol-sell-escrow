@@ -1,7 +1,7 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { TransactionStatus } from "../API";
+import { TransactionStatus } from "../types";
 import { useLoadingDispatch } from "../contexts/LoadingContext";
 import { ActionProps, ModalUserAction } from "../contexts/ModalContext";
 import { TransactionType } from "../types";

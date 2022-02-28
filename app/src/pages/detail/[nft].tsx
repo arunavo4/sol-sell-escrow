@@ -3,16 +3,17 @@ import { PublicKey } from "@solana/web3.js";
 import { useRouter } from "next/dist/client/router";
 import { useEffect, useState } from "react";
 import {
-  GetTxHistoryByNFTAddressQuery,
   TransactionStatus,
   TxHistory,
-} from "../../API";
+} from "../../types";
 import { Layout } from "../../components/Layout";
-// import { BuyerInput } from "../../components/BuyerInput";
+import { SellerInput } from "../../components/SellerInput";
 import { ImageType, MetaImage } from "../../components/MetaImage";
 import { Metadata } from "../../schema/metadata";
 import { getMetadata } from "../../web3/metaplex/metadataHelpers";
 import { ItemInfo } from "../../components/ItemInfo";
+import { database } from "../../firebase";
+import { ref, get, query, equalTo, orderByChild } from "firebase/database";
 
 export default function Detail() {
   const router = useRouter();
@@ -29,22 +30,40 @@ export default function Detail() {
       const nftPubkey = new PublicKey(nft);
       const data = await getMetadata(connection, nftPubkey);
       setMetadata(data);
-      // const response = (await API.graphql(
-      //   graphqlOperation(getTxHistoryByNFTAddress, {
-      //     nftAddress: nft,
-      //   })
-      // )) as { data: GetTxHistoryByNFTAddressQuery };
 
-      // const items = (response.data.getTxHistoryByNFTAddress?.items ||
-      //   []) as TxHistory[];
-      // if (
-      //   items.length !== 0 &&
-      //   items.find((item) => item.sellerAddress === sellerAddress)
-      // ) {
-      //   setTransaction(
-      //     items.find((item) => item.sellerAddress === sellerAddress)
-      //   );
-      // }
+      const GetTxHistoryByNFTAddr = query(ref(database), orderByChild("nftAddress"), equalTo(nft));
+
+      await get(GetTxHistoryByNFTAddr).then((snapshot) => {
+        if (snapshot.exists()) {
+            const TxHistoryData: TxHistory[] = snapshot.val();
+            var sortedTxHistoryData = [];
+            console.log(TxHistoryData);
+            
+            for (var id in TxHistoryData) {
+              sortedTxHistoryData.push(TxHistoryData[id]);
+            }
+            sortedTxHistoryData.sort((a: TxHistory, b: TxHistory): number => {
+                // Convert string dates into `Date` objects
+                const date1: Date = new Date(a["updatedAt"] || a["createdAt"]);
+                const date2: Date = new Date(b["updatedAt"] || b["createdAt"]);
+                
+                return date2.valueOf() - date1.valueOf(); // DECREASING ORDER
+            });
+            const items = (sortedTxHistoryData || []) as TxHistory[];
+            if (
+              items.length !== 0 &&
+              items.find((item) => item.sellerAddress === sellerAddress)
+            ) {
+              setTransaction(
+                items.find((item) => item.sellerAddress === sellerAddress)
+              );
+            }
+        } else {
+            console.log("No data available");
+        }
+    }).catch((error) => {
+        console.error(error);
+    });
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,15 +134,14 @@ export default function Detail() {
                 sellerAddress={sellerAddress as string}
               />
             ) : (
-              // <BuyerInput
-              //   isRequested={
-              //     transaction?.status === TransactionStatus.REQUESTED
-              //   }
-              //   nftAddress={nft as string}
-              //   onSubmitted={handlePostSubmit}
-              //   sellerAddress={sellerAddress as string}
-              // />
-              <div></div>
+              <SellerInput
+                isRequested={
+                  transaction?.status === TransactionStatus.REQUESTED
+                }
+                nftAddress={nft as string}
+                onSubmitted={handlePostSubmit}
+                sellerAddress={sellerAddress as string}
+              />
             )}
           </div>
         </div>

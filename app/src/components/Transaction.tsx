@@ -1,5 +1,4 @@
-// import { DateUtils } from "@aws-amplify/core";s
-import { TxHistory, TransactionStatus } from "../API";
+import { TxHistory, TransactionStatus } from "../types";
 import { ModalUserAction, useModalDispatch } from "../contexts/ModalContext";
 import { TransactionType } from "../types";
 

@@ -8,6 +8,6 @@ export const feeTokenAccount = new PublicKey(
   process.env.NEXT_PUBLIC_FEE_RECEIVER as string
 );
 export const feePercentage = new BN(
-  process.env.NEXT_PUBLIC_FEE_PERCENTAGE as string,
+  parseInt(process.env.NEXT_PUBLIC_FEE_PERCENTAGE as string),
   10
 );
