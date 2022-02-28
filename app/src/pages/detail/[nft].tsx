@@ -126,20 +126,19 @@ export default function Detail() {
           </div>
           <div className="w-full md:w-7/12 ml-auto mr-auto px-4">
             {sellerAddress === publicKey?.toBase58() ? (
-              <ItemInfo
-                isRequested={
-                  transaction?.status === TransactionStatus.REQUESTED
-                }
-                nftAddress={nft as string}
-                sellerAddress={sellerAddress as string}
-              />
-            ) : (
               <SellerInput
                 isRequested={
                   transaction?.status === TransactionStatus.REQUESTED
                 }
                 nftAddress={nft as string}
                 onSubmitted={handlePostSubmit}
+              />
+            ) : (
+              <ItemInfo
+                isRequested={
+                  transaction?.status === TransactionStatus.REQUESTED
+                }
+                nftAddress={nft as string}
                 sellerAddress={sellerAddress as string}
               />
             )}

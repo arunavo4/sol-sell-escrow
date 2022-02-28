@@ -1,5 +1,5 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import BN from "bn.js";
+import BigNumber from "bignumber.js";
 import { useRef, useState } from "react";
 import { feePercentage } from "../constants";
 import {
@@ -14,18 +14,19 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
+import { v4 as uuidv4 } from 'uuid';
 import { database } from "../firebase";
 import { ref, push, query, equalTo, orderByChild, update } from "firebase/database";
+import { string } from "superstruct";
+import { ObjectType } from "superstruct/lib/utils";
 
 interface SellerInputProps {
   nftAddress: string;
-  sellerAddress: string;
   isRequested: boolean;
   onSubmitted: (transaction: TxHistory | undefined) => void;
 }
 export const SellerInput = ({
   nftAddress,
-  sellerAddress,
   isRequested,
   onSubmitted,
 }: SellerInputProps) => {
@@ -37,37 +38,48 @@ export const SellerInput = ({
   const [fee, setFee] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState("");
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const buyerAddressInputRef = useRef<HTMLInputElement>(null);
+  const [buyerAddress, setBuyerAddress] = useState<string>("");
 
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
     setAmount(value);
-    const v = new BN(value);
+    const v = new BigNumber(value);
 
-    const fee = v.mul(feePercentage);
-    setFee(fee.toNumber());
+    const fee = v.multipliedBy(feePercentage);
+    setFee(fee.toNumber());    
+  };
+
+  const handleChangeBuyerAddress = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = String(e.target.value);
+    setBuyerAddress(value);
   };
 
   const isDisabled = () => {
     return (
       isRequested ||
       amount <= 0 ||
-      sellerAddress.length === 0 ||
+      buyerAddress.length === 0 ||
       loadingState.show ||
       !publicKey
     );
   };
 
   const resetInputs = () => {
+    setBuyerAddress("");
     setAmount(0);
     setFee(0);
     setErrorMessage("");
     if (amountInputRef.current) {
       amountInputRef.current.value = "";
     }
+    if (buyerAddressInputRef.current) {
+      buyerAddressInputRef.current.value = "";
+    }
   };
 
   const isValidAmount = (amt: number) => {
-    const decimal = new BN(amt).mod(new BN(1)).toString();
+    const decimal = new BigNumber(amt).mod(1).toString();
     return decimal.length < 4;
   };
 
@@ -105,12 +117,12 @@ export const SellerInput = ({
       const escrowAccount = Keypair.generate();
 
       // Get a key for a new TxHistory.
-      const newTxHistoryKey = push(ref(database)).key;
+      const newTxHistoryKey = push(ref(database)).key || uuidv4();
 
       const newTxHistory: CreateTxHistoryInput = {
         id: newTxHistoryKey,
-        buyerAddress: publicKey.toBase58(),
-        sellerAddress: sellerAddress,
+        buyerAddress: buyerAddress,
+        sellerAddress: publicKey.toBase58(),
         escrowAddress: escrowAccount.publicKey.toBase58(),
         nftAddress: nftAddress,
         offeredAmount: amount,
@@ -119,9 +131,10 @@ export const SellerInput = ({
       }
 
       // Write the new TxHistory data in the TxHistory list
-      update(ref(database), {
-        newTxHistoryKey: newTxHistory,
-      })
+      const updates: { [key: string]: any } = {};
+      updates[newTxHistoryKey] = newTxHistory;
+    
+      await update(ref(database), updates);
       
       resetInputs();
       onSubmitted(newTxHistory as TxHistory || undefined);
@@ -168,19 +181,21 @@ export const SellerInput = ({
 
                   <div className="col-span-6 sm:col-span-5">
                     <label
-                      htmlFor="seller-address"
+                      htmlFor="buyer-address"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Seller Address
+                      Buyer Address
                     </label>
                     <input
+                      ref={buyerAddressInputRef}
+                      id="buyer-address"
+                      maxLength={44}
+                      name="buyer-address"
                       type="text"
-                      name="seller-address"
-                      id="seller-address"
-                      readOnly
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      value={sellerAddress}
+                      onChange={handleChangeBuyerAddress}
                     />
+                    
                   </div>
 
                   <div className="col-span-3">
@@ -204,11 +219,11 @@ export const SellerInput = ({
               </div>
               <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                 <div className="text-md font-medium text-gray-900">
-                  {`Total: ${new BN(amount).add(new BN(fee))} SOL(fee:${fee})`}
+                  {`Total: ${new BigNumber(amount).plus(fee)} SOL(fee:${fee})`}
                 </div>
                 <div className="text-xs font-medium text-gray-700 py-1">
-                  4.0% tx fee is included. Charged after Offer accepted by
-                  Seller.
+                  {fee*100}% tx fee is included. Charged after Offer accepted by
+                  Buyer.
                 </div>
                 {errorMessage.length > 0 && (
                   <div className="text-sm font-medium text-red-700 py-2">

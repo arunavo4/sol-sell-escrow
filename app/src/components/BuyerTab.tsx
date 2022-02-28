@@ -9,10 +9,22 @@ export const BuyerTab = ({database} : {database: any}) => {
   const [items, fetch] = useTransactions(TransactionType.Buyer, database);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     if (publicKey) {
-      fetch(publicKey.toBase58());
+      try {
+        fetch(publicKey.toBase58());
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          console.log(error);
+        }
+      }
     }
-  });
+
+    return () => {
+      abortController.abort();
+    };
+  }, [fetch, publicKey]);
 
   return <Transactions items={items} type={TransactionType.Buyer} />;
 };

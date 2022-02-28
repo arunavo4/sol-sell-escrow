@@ -47,7 +47,7 @@ interface ActionButtonProps {
 }
 const ActionButton = ({ onClick, type, status }: ActionButtonProps) => {
   if (
-    type === TransactionType.Buyer &&
+    type === TransactionType.Seller &&
     status === TransactionStatus.REQUESTED
   ) {
     return (
@@ -60,7 +60,7 @@ const ActionButton = ({ onClick, type, status }: ActionButtonProps) => {
     );
   }
   if (
-    type === TransactionType.Seller &&
+    type === TransactionType.Buyer &&
     status === TransactionStatus.REQUESTED
   ) {
     return (
@@ -97,7 +97,7 @@ export const Transaction = ({ txHistory, type }: TransactionProps) => {
 
   const handleClick = () => {
     switch (type) {
-      case TransactionType.Buyer:
+      case TransactionType.Seller:
         dispatch({
           type: "SHOW_DIALOG",
           input: {
@@ -113,7 +113,7 @@ export const Transaction = ({ txHistory, type }: TransactionProps) => {
           },
         });
         break;
-      case TransactionType.Seller:
+      case TransactionType.Buyer:
         dispatch({
           type: "SHOW_DIALOG",
           input: {
