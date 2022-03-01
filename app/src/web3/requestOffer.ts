@@ -12,9 +12,6 @@ import {
     Token,
     TOKEN_PROGRAM_ID,
   } from "@solana/spl-token";
-  import {
-    createAssociatedAccountInstruction,
-  } from "./escrowInstructions";
 import { CreateTxHistoryInput, TransactionStatus } from "../types";
 
 
@@ -56,12 +53,14 @@ export async function requestOffer({
     const info = await connection.getAccountInfo(associatedAccountForSeller);
 
     if (info === null) {
-        await createAssociatedAccountInstruction({
-            associatedToken: associatedAccountForSeller,
-            mintToken: NATIVE_MINT,
-            owner: seller,
-            payer: buyer,
-        });
+        await Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            NATIVE_MINT,
+            associatedAccountForSeller,
+            seller,
+            buyer
+        );
     }
 
     console.log(
@@ -88,7 +87,7 @@ export async function requestOffer({
             }
         );
     }
-    
+
     return {
         buyerAddress: buyerAddressStr,
         sellerAddress: seller.toBase58(),

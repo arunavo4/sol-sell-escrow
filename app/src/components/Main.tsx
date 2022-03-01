@@ -1,4 +1,4 @@
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { TransactionStatus } from "../types";
@@ -12,6 +12,9 @@ import { MyNFT } from "./MyNFT";
 import { SearchNFT } from "./SearchNFT";
 import { SellerTab } from "./SellerTab";
 import { ref, update} from "firebase/database";
+import { useProgram } from "../web3/useProgram";
+import { cancelOffer } from "../web3/cancelOffer";
+import { acceptOffer } from "../web3/acceptOffer";
 
 const colors = {
   active: "text-purple-50 bg-purple-500",
@@ -23,6 +26,8 @@ export const Main = ({database} : {database: any}) => {
   const { publicKey, signTransaction } = useWallet();
   const loadingDispatch = useLoadingDispatch();
   const [tab, setTab] = useState(TransactionType.Seller);
+  const wallet: any = useAnchorWallet();
+  const { program } = useProgram({ connection, wallet });
 
   const handleSwitchTab = (type: TransactionType) => () => {
     setTab(type);
@@ -42,13 +47,13 @@ export const Main = ({database} : {database: any}) => {
     }
     loadingDispatch({ type: "SHOW_LOADING" });
     try {
-      // await cancelOffer({
-      //   connection,
-      //   buyer: publicKey,
-      //   escrowAccountAddressString,
-      //   nftAddressString: nftAddress,
-      //   signTransaction,
-      // });
+      await cancelOffer({
+        wallet: wallet,
+        program: program,
+        seller: publicKey,
+        escrowAccountAddressString,
+        nftAddressString: nftAddress,
+      });
       update(ref(database, id), {
         status: TransactionStatus.CANCELED,
       });
@@ -77,14 +82,14 @@ export const Main = ({database} : {database: any}) => {
     }
     loadingDispatch({ type: "SHOW_LOADING" });
     try {
-      // const result = await acceptOffer({
-      //   connection,
-      //   escrowAccountAddressString,
-      //   expectedSellerReceiveAmountInSol: amount,
-      //   seller: publicKey,
-      //   sellerNFTAddressStr: nftAddress,
-      //   signTransaction,
-      // });
+      const result = await acceptOffer({
+        connection,
+        wallet,
+        program,
+        escrowAccountAddressString,
+        buyer: publicKey,
+        sellerNFTAddressStr: nftAddress,
+      });
       update(ref(database, id), {
         status: TransactionStatus.ACCEPTED,
       });
