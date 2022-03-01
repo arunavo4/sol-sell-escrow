@@ -5,6 +5,7 @@ import {
     LAMPORTS_PER_SOL,
     SystemProgram,
     PublicKey,
+    TransactionInstruction,
   } from "@solana/web3.js";
 import {
     AccountInfo,
@@ -16,6 +17,8 @@ import {
   } from "@solana/spl-token";
 
 import { Escrow } from "../idl/types/escrow";
+import { generateTransaction, signAndSendTransaction } from "./transaction";
+import { SignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
 type EscrowAccount = IdlAccounts<Escrow>["escrowAccount"];
 
@@ -41,6 +44,7 @@ export async function acceptOffer({
     escrowAccountAddressString,
     buyer,
     sellerNFTAddressStr,
+    signTransaction,
 }: {
     connection: Connection;
     wallet: any;
@@ -48,9 +52,13 @@ export async function acceptOffer({
     escrowAccountAddressString: string;
     buyer: PublicKey;
     sellerNFTAddressStr: string;
+    signTransaction: SignerWalletAdapterProps["signTransaction"];
 }): Promise<void> {
     const escrowAccount = new PublicKey(escrowAccountAddressString);
     const sellerNFT = new PublicKey(sellerNFTAddressStr);
+
+    const instructions: TransactionInstruction[] = [];
+
     if (program) {
         let _escrowAccount = await program.account.escrowAccount.fetch(escrowAccount);
 
@@ -60,45 +68,64 @@ export async function acceptOffer({
             sellerNFT,
             buyer
         );
+
         const hasAssociatedAccount = await checkExistanceOfAssociatedAccount(
             connection,
             associatedAccountForReceivingNFT,
             sellerNFTAddressStr
         );
         if (!hasAssociatedAccount) {
-            await Token.createAssociatedTokenAccountInstruction(
-                ASSOCIATED_TOKEN_PROGRAM_ID,
-                TOKEN_PROGRAM_ID,
-                NATIVE_MINT,
-                associatedAccountForReceivingNFT,
-                buyer,
-                buyer
+            instructions.push(
+                await Token.createAssociatedTokenAccountInstruction(
+                    ASSOCIATED_TOKEN_PROGRAM_ID,
+                    TOKEN_PROGRAM_ID,
+                    NATIVE_MINT,
+                    associatedAccountForReceivingNFT,
+                    buyer,
+                    buyer
+                )
             );
         }
+
+        // confirm transaction
+        const transaction = await generateTransaction({
+            connection,
+            feePayer: buyer,
+        });
+
+        instructions.forEach((instruction) => transaction.add(instruction));
+
+        const signature = await signAndSendTransaction(
+            connection,
+            signTransaction,
+            transaction
+        );
+        console.log("Transaction confirmed. Signature", signature);
+        
     
         console.log(
             "Associated Token Account for Buyer",
             associatedAccountForReceivingNFT.toBase58()
         );
 
-        // Get the PDA that is assigned authority to token account.
-        const [_pda, _nonce] = await PublicKey.findProgramAddress(
-            [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
-            program.programId
-        );
+        // // Get the PDA that is assigned authority to token account.
+        // const [_pda, _nonce] = await PublicKey.findProgramAddress(
+        //     [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
+        //     program.programId
+        // );
 
-        await program.rpc.exchange({
-            accounts: {
-              taker: wallet.publicKey,
-              takerReceiveTokenAccount: associatedAccountForReceivingNFT,
-              pdaDepositTokenAccount: _escrowAccount.initializerDepositTokenAccount,
-              initializerReceiveWalletAccount: _escrowAccount.initializerReceiveWalletAccount,
-              initializerMainAccount: _escrowAccount.initializerKey,
-              escrowAccount: escrowAccount,
-              pdaAccount: _pda,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              systemProgram: SystemProgram.programId,
-            },
-          });
+        // await program.rpc.exchange({
+        //     accounts: {
+        //       taker: wallet.publicKey,
+        //       takerReceiveTokenAccount: associatedAccountForReceivingNFT,
+        //       pdaDepositTokenAccount: _escrowAccount.initializerDepositTokenAccount,
+        //       initializerReceiveWalletAccount: _escrowAccount.initializerReceiveWalletAccount,
+        //       initializerMainAccount: _escrowAccount.initializerKey,
+        //       escrowAccount: escrowAccount,
+        //       pdaAccount: _pda,
+        //       tokenProgram: TOKEN_PROGRAM_ID,
+        //       systemProgram: SystemProgram.programId,
+        //     },
+        //   });
     }
 };

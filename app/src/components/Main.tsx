@@ -89,6 +89,7 @@ export const Main = ({database} : {database: any}) => {
         escrowAccountAddressString,
         buyer: publicKey,
         sellerNFTAddressStr: nftAddress,
+        signTransaction,
       });
       update(ref(database, id), {
         status: TransactionStatus.ACCEPTED,

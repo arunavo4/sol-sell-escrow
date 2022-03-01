@@ -102,7 +102,7 @@ export const SellerInput = ({
       return;
     }
     try {
-      const newTxHistory = await requestOffer({
+      const TxHistory = await requestOffer({
         connection,
         seller: publicKey,
         buyerAddressStr: buyerAddress,
@@ -113,7 +113,7 @@ export const SellerInput = ({
         fee,
       });
       loadingDispatch({ type: "SHOW_LOADING" });
-      console.log(newTxHistory);
+      console.log(TxHistory);
 
       // TODO: update this with real data
       console.log("Create escrowToken");
@@ -122,16 +122,11 @@ export const SellerInput = ({
       // Get a key for a new TxHistory.
       const newTxHistoryKey = push(ref(database)).key || uuidv4();
 
-      // const newTxHistory: CreateTxHistoryInput = {
-      //   id: newTxHistoryKey,
-      //   buyerAddress: buyerAddress,
-      //   sellerAddress: publicKey.toBase58(),
-      //   escrowAddress: escrowAccount.publicKey.toBase58(),
-      //   nftAddress: nftAddress,
-      //   offeredAmount: amount,
-      //   status: TransactionStatus.REQUESTED,
-      //   createdAt: new Date(Date.now()).toISOString(),
-      // }
+      const newTxHistory: CreateTxHistoryInput = {
+        ...TxHistory,
+        id: newTxHistoryKey,
+        createdAt: new Date(Date.now()).toISOString(),
+      }
 
       // Write the new TxHistory data in the TxHistory list
       const updates: { [key: string]: any } = {};

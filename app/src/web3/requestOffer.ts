@@ -40,14 +40,26 @@ export async function requestOffer({
     .toNumber();
     const feeInLamport = fee * LAMPORTS_PER_SOL;
     const buyer = new PublicKey(buyerAddressStr);
+    const sellerNFT = new PublicKey(sellerNFTAddressStr);
 
-    // Get Associated Token Account
     const associatedAccountForSeller = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         NATIVE_MINT,
         seller
-    );
+      );
+    
+      const associatedAccountForNFT = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        sellerNFT,
+        seller
+      );
+    
+      console.log(
+        "Associated Token Account for Seller NFT",
+        associatedAccountForNFT.toBase58()
+      );
 
     // Check if seller has an associated token for native mint
     const info = await connection.getAccountInfo(associatedAccountForSeller);
@@ -77,7 +89,7 @@ export async function requestOffer({
             {
             accounts: {
                 initializer: wallet.publicKey,
-                initializerDepositTokenAccount: associatedAccountForSeller,
+                initializerDepositTokenAccount: associatedAccountForNFT,
                 initializerReceiveWalletAccount: wallet.publicKey,
                 escrowAccount: escrowAccount.publicKey,
                 systemProgram: SystemProgram.programId,
