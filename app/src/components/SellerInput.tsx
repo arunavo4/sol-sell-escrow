@@ -1,4 +1,4 @@
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
 import BigNumber from "bignumber.js";
 import { useRef, useState } from "react";
 import { feePercentage } from "../constants";
@@ -16,9 +16,9 @@ import {
 } from "@solana/web3.js";
 import { v4 as uuidv4 } from 'uuid';
 import { database } from "../firebase";
-import { ref, push, query, equalTo, orderByChild, update } from "firebase/database";
-import { string } from "superstruct";
-import { ObjectType } from "superstruct/lib/utils";
+import { ref, push, update } from "firebase/database";
+import { requestOffer } from "../web3/requestOffer";
+import { useProgram } from "../web3/useProgram";
 
 interface SellerInputProps {
   nftAddress: string;
@@ -40,6 +40,8 @@ export const SellerInput = ({
   const amountInputRef = useRef<HTMLInputElement>(null);
   const buyerAddressInputRef = useRef<HTMLInputElement>(null);
   const [buyerAddress, setBuyerAddress] = useState<string>("");
+  const wallet: any = useAnchorWallet();
+  const { program } = useProgram({ connection, wallet });
 
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
@@ -100,17 +102,18 @@ export const SellerInput = ({
       return;
     }
     try {
-      // const result = await requestOffer({
-      //   connection,
-      //   buyer: publicKey,
-      //   signTransaction,
-      //   sellerAddressStr: sellerAddress,
-      //   sellerNFTAddressStr: nftAddress,
-      //   amountInSol: amount,
-      //   fee,
-      // });
+      const newTxHistory = await requestOffer({
+        connection,
+        seller: publicKey,
+        buyerAddressStr: buyerAddress,
+        sellerNFTAddressStr: nftAddress,
+        wallet: wallet,
+        program: program,
+        amountInSol: amount,
+        fee,
+      });
       loadingDispatch({ type: "SHOW_LOADING" });
-      // console.log(result);
+      console.log(newTxHistory);
 
       // TODO: update this with real data
       console.log("Create escrowToken");
@@ -119,16 +122,16 @@ export const SellerInput = ({
       // Get a key for a new TxHistory.
       const newTxHistoryKey = push(ref(database)).key || uuidv4();
 
-      const newTxHistory: CreateTxHistoryInput = {
-        id: newTxHistoryKey,
-        buyerAddress: buyerAddress,
-        sellerAddress: publicKey.toBase58(),
-        escrowAddress: escrowAccount.publicKey.toBase58(),
-        nftAddress: nftAddress,
-        offeredAmount: amount,
-        status: TransactionStatus.REQUESTED,
-        createdAt: new Date(Date.now()).toISOString(),
-      }
+      // const newTxHistory: CreateTxHistoryInput = {
+      //   id: newTxHistoryKey,
+      //   buyerAddress: buyerAddress,
+      //   sellerAddress: publicKey.toBase58(),
+      //   escrowAddress: escrowAccount.publicKey.toBase58(),
+      //   nftAddress: nftAddress,
+      //   offeredAmount: amount,
+      //   status: TransactionStatus.REQUESTED,
+      //   createdAt: new Date(Date.now()).toISOString(),
+      // }
 
       // Write the new TxHistory data in the TxHistory list
       const updates: { [key: string]: any } = {};
