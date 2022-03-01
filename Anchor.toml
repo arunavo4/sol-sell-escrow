@@ -13,3 +13,4 @@ wallet = "id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+copy-idl = "mkdir -p app/src/idl && cp target/idl/escrow.json app/src/idl/escrow.json"
