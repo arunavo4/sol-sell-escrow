@@ -68,13 +68,12 @@ export async function acceptOffer({
     if (program) {
         let _escrowAccount = await program.account.escrowAccount.fetch(escrowAccount);
 
-        const associatedAccountForReceivingNFT =
-            await Token.getAssociatedTokenAddress(
+        const associatedAccountForReceivingNFT = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             sellerNFT,
             buyer
-            );
+        );
         const hasAssociatedAccount = await checkExistanceOfAssociatedAccount(
             connection,
             associatedAccountForReceivingNFT,
