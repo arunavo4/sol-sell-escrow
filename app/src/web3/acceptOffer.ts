@@ -68,44 +68,6 @@ export async function acceptOffer({
     if (program) {
         let _escrowAccount = await program.account.escrowAccount.fetch(escrowAccount);
 
-        // Create Mint Token Account that has token to transfer
-        // Create a new account
-        const mintTokenAccount = anchor.web3.Keypair.generate();
-        instructions.push(
-            ...(await createWrappedNativeAccountInstructions({
-            connection,
-            nativeAccount: mintTokenAccount.publicKey,
-            owner: buyer,
-            payer: buyer,
-            }))
-        );
-
-        const associatedAccountForSeller = await Token.getAssociatedTokenAddress(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            NATIVE_MINT,
-            seller
-        );
-
-        // Check if seller has an associated token for native mint
-        const info = await connection.getAccountInfo(associatedAccountForSeller);
-
-        if (info === null) {
-            instructions.push(
-            await createAssociatedAccountInstruction({
-                associatedToken: associatedAccountForSeller,
-                mintToken: NATIVE_MINT,
-                owner: seller,
-                payer: buyer,
-            })
-            );
-        }
-
-        console.log(
-            "Associated Token Account for Seller:",
-            associatedAccountForSeller.toBase58()
-        );
-
         const associatedAccountForReceivingNFT =
             await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -120,12 +82,12 @@ export async function acceptOffer({
         );
         if (!hasAssociatedAccount) {
             instructions.push(
-            await createAssociatedAccountInstruction({
-                associatedToken: associatedAccountForReceivingNFT,
-                mintToken: sellerNFT,
-                owner: buyer,
-                payer: buyer,
-            })
+                await createAssociatedAccountInstruction({
+                    associatedToken: associatedAccountForReceivingNFT,
+                    mintToken: sellerNFT,
+                    owner: buyer,
+                    payer: buyer,
+                })
             );
         }
 
