@@ -35,10 +35,14 @@ export const Main = ({database} : {database: any}) => {
   const cancelOfferAction = async ({
     id,
     escrowAccountAddressString,
+    sellerPublicKey,
+    buyerPublicKey,
     nftAddress,
   }: {
     id: string;
     escrowAccountAddressString: string;
+    sellerPublicKey: string;
+    buyerPublicKey: string;
     nftAddress: string;
   }) => {
     if (!publicKey || !signTransaction) {
@@ -69,11 +73,15 @@ export const Main = ({database} : {database: any}) => {
     id,
     escrowAccountAddressString,
     amount,
+    sellerPublicKey,
+    buyerPublicKey,
     nftAddress,
   }: {
     id: string;
     escrowAccountAddressString: string;
     amount: number;
+    sellerPublicKey: string;
+    buyerPublicKey: string;
     nftAddress: string;
   }) => {
     if (!publicKey || !signTransaction) {
@@ -88,6 +96,7 @@ export const Main = ({database} : {database: any}) => {
         program,
         escrowAccountAddressString,
         buyer: publicKey,
+        sellerAddressString: sellerPublicKey,
         sellerNFTAddressStr: nftAddress,
         signTransaction,
       });
@@ -108,6 +117,8 @@ export const Main = ({database} : {database: any}) => {
         return cancelOfferAction({
           id: props.id,
           escrowAccountAddressString: props.escrowAddress,
+          sellerPublicKey: props.sellerAddress,
+          buyerPublicKey: props.buyerAddress,
           nftAddress: props.nftAddress,
         });
       }
@@ -116,6 +127,8 @@ export const Main = ({database} : {database: any}) => {
           id: props.id,
           escrowAccountAddressString: props.escrowAddress,
           amount: props.amount,
+          sellerPublicKey: props.sellerAddress,
+          buyerPublicKey: props.buyerAddress,
           nftAddress: props.nftAddress,
         });
       }

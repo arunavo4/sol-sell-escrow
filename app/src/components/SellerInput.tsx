@@ -111,6 +111,7 @@ export const SellerInput = ({
         program: program,
         amountInSol: amount,
         fee,
+        signTransaction,
       });
       loadingDispatch({ type: "SHOW_LOADING" });
       console.log(TxHistory);

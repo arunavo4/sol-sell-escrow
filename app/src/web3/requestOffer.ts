@@ -4,8 +4,12 @@ import {
     LAMPORTS_PER_SOL,
     SystemProgram,
     PublicKey,
+    TransactionInstruction,
   } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
+import {
+    createAssociatedAccountInstruction,
+} from "./escrowInstructions";
 import {
     ASSOCIATED_TOKEN_PROGRAM_ID,
     NATIVE_MINT,
@@ -13,7 +17,8 @@ import {
     TOKEN_PROGRAM_ID,
   } from "@solana/spl-token";
 import { CreateTxHistoryInput, TransactionStatus } from "../types";
-
+import { generateTransaction, signAndSendTransaction } from "./transaction";
+import { SignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
 export async function requestOffer({
     connection,
@@ -24,6 +29,7 @@ export async function requestOffer({
     program,
     amountInSol,
     fee,
+    signTransaction,
 }: {
     connection: Connection;
     seller: PublicKey;
@@ -33,6 +39,7 @@ export async function requestOffer({
     program: anchor.Program<anchor.Idl> | undefined;
     amountInSol: number;
     fee: number;
+    signTransaction: SignerWalletAdapterProps["signTransaction"];
 }): Promise<CreateTxHistoryInput> {
     const totalAmountInLamport = new BigNumber(amountInSol)
     .plus(new BigNumber(fee))
@@ -41,39 +48,55 @@ export async function requestOffer({
     const feeInLamport = fee * LAMPORTS_PER_SOL;
     const buyer = new PublicKey(buyerAddressStr);
     const sellerNFT = new PublicKey(sellerNFTAddressStr);
+    const instructions: TransactionInstruction[] = [];
 
     const associatedAccountForSeller = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         NATIVE_MINT,
         seller
-      );
-    
-      const associatedAccountForNFT = await Token.getAssociatedTokenAddress(
+    );
+
+    const associatedAccountForNFT = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         sellerNFT,
         seller
-      );
-    
-      console.log(
+    );
+
+    console.log(
         "Associated Token Account for Seller NFT",
         associatedAccountForNFT.toBase58()
-      );
+    );
 
     // Check if seller has an associated token for native mint
     const info = await connection.getAccountInfo(associatedAccountForSeller);
 
     if (info === null) {
-        await Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            NATIVE_MINT,
-            associatedAccountForSeller,
-            seller,
-            buyer
+        instructions.push(
+            await createAssociatedAccountInstruction({
+                associatedToken: associatedAccountForSeller,
+                mintToken: NATIVE_MINT,
+                owner: seller,
+                payer: seller,
+            })
         );
     }
+
+    // confirm transaction
+    const transaction = await generateTransaction({
+        connection,
+        feePayer: seller,
+    });
+
+    instructions.forEach((instruction) => transaction.add(instruction));
+
+    const signature = await signAndSendTransaction(
+        connection,
+        signTransaction,
+        transaction
+    );
+    console.log("Transaction confirmed. Signature", signature);
 
     console.log(
         "Associated Token Account for Seller:",

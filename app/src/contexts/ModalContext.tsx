@@ -16,6 +16,8 @@ export type ActionProps =
       type: ModalUserAction.CancelOffer;
       id: string;
       escrowAddress: string;
+      sellerAddress: string;
+      buyerAddress: string;
       nftAddress: string;
     }
   | {
@@ -23,6 +25,8 @@ export type ActionProps =
       id: string;
       amount: number;
       escrowAddress: string;
+      sellerAddress: string;
+      buyerAddress: string;
       nftAddress: string;
     };
 type Content = {

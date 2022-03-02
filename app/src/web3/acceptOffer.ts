@@ -15,7 +15,10 @@ import {
     Token,
     TOKEN_PROGRAM_ID,
   } from "@solana/spl-token";
-
+import {
+    createAssociatedAccountInstruction,
+    createWrappedNativeAccountInstructions,
+} from "./escrowInstructions";
 import { Escrow } from "../idl/types/escrow";
 import { generateTransaction, signAndSendTransaction } from "./transaction";
 import { SignerWalletAdapterProps } from "@solana/wallet-adapter-base";
@@ -43,6 +46,7 @@ export async function acceptOffer({
     program,
     escrowAccountAddressString,
     buyer,
+    sellerAddressString,
     sellerNFTAddressStr,
     signTransaction,
 }: {
@@ -51,24 +55,64 @@ export async function acceptOffer({
     program: anchor.Program<anchor.Idl> | undefined;
     escrowAccountAddressString: string;
     buyer: PublicKey;
+    sellerAddressString: string;
     sellerNFTAddressStr: string;
     signTransaction: SignerWalletAdapterProps["signTransaction"];
 }): Promise<void> {
     const escrowAccount = new PublicKey(escrowAccountAddressString);
     const sellerNFT = new PublicKey(sellerNFTAddressStr);
+    const seller = new PublicKey(sellerAddressString);
 
     const instructions: TransactionInstruction[] = [];
 
     if (program) {
         let _escrowAccount = await program.account.escrowAccount.fetch(escrowAccount);
 
-        const associatedAccountForReceivingNFT = await Token.getAssociatedTokenAddress(
+        // Create Mint Token Account that has token to transfer
+        // Create a new account
+        const mintTokenAccount = anchor.web3.Keypair.generate();
+        instructions.push(
+            ...(await createWrappedNativeAccountInstructions({
+            connection,
+            nativeAccount: mintTokenAccount.publicKey,
+            owner: buyer,
+            payer: buyer,
+            }))
+        );
+
+        const associatedAccountForSeller = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            NATIVE_MINT,
+            seller
+        );
+
+        // Check if seller has an associated token for native mint
+        const info = await connection.getAccountInfo(associatedAccountForSeller);
+
+        if (info === null) {
+            instructions.push(
+            await createAssociatedAccountInstruction({
+                associatedToken: associatedAccountForSeller,
+                mintToken: NATIVE_MINT,
+                owner: seller,
+                payer: buyer,
+            })
+            );
+        }
+
+        console.log(
+            "Associated Token Account for Seller:",
+            associatedAccountForSeller.toBase58()
+        );
+
+        const associatedAccountForReceivingNFT =
+            await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             sellerNFT,
             buyer
-        );
-
+            );
         const hasAssociatedAccount = await checkExistanceOfAssociatedAccount(
             connection,
             associatedAccountForReceivingNFT,
@@ -76,16 +120,19 @@ export async function acceptOffer({
         );
         if (!hasAssociatedAccount) {
             instructions.push(
-                await Token.createAssociatedTokenAccountInstruction(
-                    ASSOCIATED_TOKEN_PROGRAM_ID,
-                    TOKEN_PROGRAM_ID,
-                    NATIVE_MINT,
-                    associatedAccountForReceivingNFT,
-                    buyer,
-                    buyer
-                )
+            await createAssociatedAccountInstruction({
+                associatedToken: associatedAccountForReceivingNFT,
+                mintToken: sellerNFT,
+                owner: buyer,
+                payer: buyer,
+            })
             );
         }
+
+        console.log(
+            "Associated Token Account for Buyer",
+            associatedAccountForReceivingNFT.toBase58()
+        );
 
         // confirm transaction
         const transaction = await generateTransaction({
@@ -108,24 +155,24 @@ export async function acceptOffer({
             associatedAccountForReceivingNFT.toBase58()
         );
 
-        // // Get the PDA that is assigned authority to token account.
-        // const [_pda, _nonce] = await PublicKey.findProgramAddress(
-        //     [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
-        //     program.programId
-        // );
+        // Get the PDA that is assigned authority to token account.
+        const [_pda, _nonce] = await PublicKey.findProgramAddress(
+            [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
+            program.programId
+        );
 
-        // await program.rpc.exchange({
-        //     accounts: {
-        //       taker: wallet.publicKey,
-        //       takerReceiveTokenAccount: associatedAccountForReceivingNFT,
-        //       pdaDepositTokenAccount: _escrowAccount.initializerDepositTokenAccount,
-        //       initializerReceiveWalletAccount: _escrowAccount.initializerReceiveWalletAccount,
-        //       initializerMainAccount: _escrowAccount.initializerKey,
-        //       escrowAccount: escrowAccount,
-        //       pdaAccount: _pda,
-        //       tokenProgram: TOKEN_PROGRAM_ID,
-        //       systemProgram: SystemProgram.programId,
-        //     },
-        //   });
+        await program.rpc.exchange({
+            accounts: {
+              taker: wallet.publicKey,
+              takerReceiveTokenAccount: associatedAccountForReceivingNFT,
+              pdaDepositTokenAccount: _escrowAccount.initializerDepositTokenAccount,
+              initializerReceiveWalletAccount: _escrowAccount.initializerReceiveWalletAccount,
+              initializerMainAccount: _escrowAccount.initializerKey,
+              escrowAccount: escrowAccount,
+              pdaAccount: _pda,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            },
+          });
     }
 };
