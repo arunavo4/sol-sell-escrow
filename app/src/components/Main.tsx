@@ -54,7 +54,7 @@ export const Main = ({database} : {database: any}) => {
       await cancelOffer({
         wallet: wallet,
         program: program,
-        seller: publicKey,
+        sellerAddressString: sellerPublicKey,
         escrowAccountAddressString,
         nftAddressString: nftAddress,
       });

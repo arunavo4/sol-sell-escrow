@@ -12,19 +12,21 @@ import {
 export async function cancelOffer({
     wallet,
     program,
-    seller,
+    sellerAddressString,
     escrowAccountAddressString,
     nftAddressString,
 }: {
     wallet: any;
     program: anchor.Program<anchor.Idl> | undefined;
-    seller: PublicKey;
     escrowAccountAddressString: string;
+    sellerAddressString: string;
     nftAddressString: string;
 }): Promise<void> {
-    const escrowAccountAddress = new PublicKey(escrowAccountAddressString);
-
+    const escrowAccount = new PublicKey(escrowAccountAddressString);
+    const seller = new PublicKey(sellerAddressString);
     if (program) {
+        let _escrowAccount = await program.account.escrowAccount.fetch(escrowAccount);
+
         // Get the PDA that is assigned authority to token account.
         const [_pda, _nonce] = await PublicKey.findProgramAddress(
             [Buffer.from(anchor.utils.bytes.utf8.encode("escrow"))],
@@ -45,10 +47,10 @@ export async function cancelOffer({
         // Cancel the escrow.
         await program.rpc.cancelEscrow({
             accounts: {
-                initializer: wallet.publicKey,
+                initializer: _escrowAccount.initializerKey,
                 pdaDepositTokenAccount: associatedAccountForNFT,
                 pdaAccount: _pda,
-                escrowAccount: escrowAccountAddress,
+                escrowAccount: escrowAccount,
                 tokenProgram: TOKEN_PROGRAM_ID,
             },
         });
