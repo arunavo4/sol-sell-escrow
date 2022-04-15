@@ -1,6 +1,8 @@
 # NFT (SPL Token) Sell Escrow
 This project is inspired from [Sol-Hayama](https://github.com/tomoima525/sol-hayama) but its opposite, its a NFT Sell Offer rather than NFT Buy Offer.
 
+Another Major change is the contract is written in anchor and not native rust.
+
 Test it out, currently deployed on Solana devnet.
 
 <img width="1490" alt="Screenshot 2022-04-15 at 11 08 35 AM" src="https://user-images.githubusercontent.com/28377631/163526659-2541bfa2-e378-44bb-8347-03b834b51ecc.png">
