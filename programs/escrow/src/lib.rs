@@ -15,7 +15,7 @@ use anchor_lang::solana_program::{program::invoke, system_instruction::transfer}
 use anchor_spl::token::{self, SetAuthority, Token, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
 
-declare_id!("93tkEd8UBH9yWRDnFzppoRkw3CKMz8vV8VmPKir9cXP3");
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod escrow {
