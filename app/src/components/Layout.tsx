@@ -17,12 +17,17 @@ export const Layout = ({
         <Link href="/" passHref>
           <a>
             <div className="font-mono text-2xl font-light text-pink-500 text-left">
-              👨‍🚀 SolSeller
+            <Image
+              alt="logos"
+              src="/kalzom_logo.png"
+              height={50}
+              width={50}
+            />
             </div>
           </a>
         </Link>
-        <div className="font-mono text-xs text-gray-600 px-3">
-          Selling NFT&apos;s on the Solana blockchain
+        <div className="font-mono text-xs text-gray-600 px-3 my-auto">
+          SOLANA EXCHANGE
         </div>
       </div>
       <div className="flex flex-row items-center">
