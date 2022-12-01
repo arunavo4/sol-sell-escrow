@@ -46,3 +46,8 @@ anchor deploy
 # Push your code to the main branch to auto-deploy on Netlify.
 git push
 ```
+
+## Known Issues:
+There might be this issue when trying to deploy the contract [Link](https://github.com/arunavo4/sol-sell-escrow/issues/2)
+I have fixed it [here](https://github.com/arunavo4/sol-nft-sell-program/tree/main) in a seperate repo for now, once I can get some time to integrate the front end I will redeploy the program.
+
